@@ -34,6 +34,9 @@ abstract Class Book{
         
         return $result;
     }
+    public function getId(){
+        return $this->id;
+    }
 
     abstract public function checkOut(int $inReaderId):string;
 }
@@ -97,11 +100,79 @@ Class ElectronicBook extends Book implements CifralBook{
     }
 }
 
+
+class Shelf {
+    public  $books = [];
+
+    public $id;
+
+    public function __construct($id){
+        $this->id = $id;
+    }
+    
+    public function installBook(Book $book): void{
+       // array_push($this->books, $book);
+       $this->books[] = $book;
+    }
+    public function uninstallBook(int $bookId): void{
+        foreach($this->books as $key => $value){
+            if($value->getId() == $bookId){
+                unset($this->books[$key]);
+            }
+        }
+    }
+    public function getBooks(): array{
+        return $this->books;
+    }
+    public function getId(): int{
+        return $this->id;
+    }
+}
+
+
+class Room{
+    public $id;
+    public $shelves = [];
+    public function __construct($id, $shelfCount){
+        $this->id = $id;
+        for($i = 0; $i < $shelfCount; $i++){
+            $this->shelves[] = new Shelf($i);
+        }
+    }
+    public function addBook(Book $book, $shelfId): void{
+        foreach($this->shelves as $key => $value){
+            if($value->getId() == $shelfId){
+                $this->shelves[$key]->installBook($book);
+            }
+        }
+    }
+
+    public function removeBook(int $bookId): void{
+        foreach($this->shelves as &$shelf){
+            $shelf->uninstallBook($bookId);
+        }
+    }
+}
+
+
 $books = [
     new PaperBook(0, "Novels", "This novels for kids..", "Piter Worker", "12-09-2013", "Vostriakovskaya st. 6"),
 
-    new ElectronicBook(1, "Home and Work", "This is about you main time in your life...", "Marine Le Pen", 31-12-2012, "https://booker.ru/work_and_home")
+    new PaperBook(1, "Drink Water", "This about drinking..", "Piter Pen", "12-11-2013", "Vostriakovskaya st. 6"),
+
+    new ElectronicBook(2, "Home and Work", "This is about you main time in your life...", "Marine Le Pen", 31-12-2012, "https://booker.ru/work_and_home")
 ];
+
+
+$books2 = [
+    new PaperBook(3, "Fantasy", "This novels for kids..", "Piter Worker", "12-09-2013", "Vostriakovskaya st. 6"),
+
+    new PaperBook(4, "Go and sleep", "This about drinking..", "Piter Pen", "12-11-2013", "Vostriakovskaya st. 6"),
+
+    new ElectronicBook(5, "Fly", "This is about you main time in your life...", "Marine Le Pen", 31-12-2012, "https://booker.ru/fly")
+];
+
+echo "Электронная и бумажная книга: \n";
 
 foreach($books as $book){
     if($book instanceof RealBook){
@@ -113,12 +184,59 @@ foreach($books as $book){
 }
 
 
+echo "Выдача книг: \n";
+
 echo $books[0]->checkOut(10). "\n";
 echo $books[1]->checkOut(25). "\n";
+echo $books[2]->checkOut(27). "\n";
 
 echo $books[0]->checkOut(40). "\n";
 echo $books[1]->checkOut(56). "\n";
+echo $books[2]->checkOut(58). "\n";
 
+echo "Книги на полке (Агрегация): \n";
 
+$shelf = new Shelf(0);
+print_r($shelf->getBooks() );
+
+echo "Установка книг на полку \n";
+
+foreach($books as $book){
+    if($book instanceof RealBook){
+        $shelf->installBook($book);
+    }
+}
+
+print_r($shelf->getBooks() );
+
+echo "Удаление книги с полки \n";
+
+$shelf->uninstallBook(0);
+
+print_r($shelf->getBooks() );
+
+echo "Создание комнаты с полками и заполнение книгами \n";
+
+$room = new Room(0,2);
+
+foreach($books as $book){
+    if($book instanceof RealBook){
+        $room->addBook($book, 0);
+    }
+}
+
+foreach($books2 as $book){
+    if($book instanceof RealBook){
+        $room->addBook($book, 1);
+    }
+}
+
+print_r($room);
+
+echo "Удаление книги \n";
+
+$room->removeBook(0);
+
+print_r($room);
 
 //docker run --rm -v ${pwd}:/cli php:8.2-cli php /cli/book.php
